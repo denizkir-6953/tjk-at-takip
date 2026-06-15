@@ -1,0 +1,19 @@
+{
+  "telegram_bot_token": "BOT_TOKEN_BURAYA",
+  "telegram_chat_ids": [
+    "CHAT_ID_BURAYA"
+  ],
+  "at_sahipleri": [
+    {
+      "isim": "AT SAHİBİ 1 TAM İSİM",
+      "id": ""
+    },
+    {
+      "isim": "AT SAHİBİ 2 TAM İSİM",
+      "id": ""
+    }
+  ],
+  "bildirim_saati": "21:00",
+  "komisyon_yuzdesi": 5.0,
+  "log_seviyesi": "INFO"
+}
