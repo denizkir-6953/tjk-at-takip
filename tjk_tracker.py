@@ -72,13 +72,20 @@ DEFAULT_CONFIG = {
 def config_yukle() -> dict:
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
+            icerik = f.read()
+        # heredoc ile yazilinca her satir basta bosluk alabilir, temizle
+        satirlar = [s.strip() for s in icerik.splitlines()]
+        temiz = "\n".join(satirlar)
+        try:
+            cfg = json.loads(temiz)
+        except json.JSONDecodeError:
+            cfg = json.loads(icerik)
         for k, v in DEFAULT_CONFIG.items():
             cfg.setdefault(k, v)
         return cfg
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(DEFAULT_CONFIG, f, ensure_ascii=False, indent=2)
-    print(f"⚠️  config.json oluşturuldu. Lütfen düzenleyin: {CONFIG_FILE}")
+    print(f"config.json olusturuldu. Lutfen duzenleyin: {CONFIG_FILE}")
     return DEFAULT_CONFIG
 
 
