@@ -1,0 +1,85 @@
+name: TJK GÃ¼nlÃ¼k KoÅŸu Raporu
+
+on:
+  schedule:
+    # Her gÃ¼n TÃ¼rkiye saati 21:00 = UTC 18:00
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+    inputs:
+      tarih:
+        description: "Tarih (YYYY-MM-DD, boÅŸ = bugÃ¼n)"
+        required: false
+        default: ""
+
+jobs:
+  tjk-rapor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Kodu Ä°ndir
+        uses: actions/checkout@v4
+
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: BaÄŸÄ±mlÄ±lÄ±klarÄ± YÃ¼kle
+        run: pip install requests schedule openpyxl
+
+      - name: Config OluÅŸtur
+        env:
+          TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
+          AT_SAHIPLERI:      ${{ secrets.AT_SAHIPLERI }}
+          SMTP_KULLANICI:    ${{ secrets.SMTP_KULLANICI }}
+          SMTP_SIFRE:        ${{ secrets.SMTP_SIFRE }}
+          EMAIL_ALICILAR:    ${{ secrets.EMAIL_ALICILAR }}
+          KOMISYON:          ${{ vars.KOMISYON_YUZDESI || '5.0' }}
+          TELEGRAM_AKTIF:    ${{ vars.TELEGRAM_AKTIF    || 'true' }}
+          EMAIL_AKTIF:       ${{ vars.EMAIL_AKTIF        || 'true' }}
+        run: |
+          python - <<'EOF'
+          import json, os
+          cfg = {
+            "telegram_bot_token":  os.environ.get("TELEGRAM_TOKEN", ""),
+            "telegram_chat_ids":   json.loads(os.environ.get("TELEGRAM_CHAT_IDS","[]")),
+            "telegram_aktif":      os.environ.get("TELEGRAM_AKTIF","true").lower()=="true",
+            "email_aktif":         os.environ.get("EMAIL_AKTIF","true").lower()=="true",
+            "smtp": {
+              "sunucu":    "smtp.gmail.com",
+              "port":      587,
+              "kullanici": os.environ.get("SMTP_KULLANICI",""),
+              "sifre":     os.environ.get("SMTP_SIFRE","")
+            },
+            "email_alicilar":  json.loads(os.environ.get("EMAIL_ALICILAR","[]")),
+            "at_sahipleri":    json.loads(os.environ.get("AT_SAHIPLERI","[]")),
+            "bildirim_saati":  "21:00",
+            "komisyon_yuzdesi": float(os.environ.get("KOMISYON","5.0")),
+            "excel_aktif":     True,
+            "excel_klasor":    "raporlar",
+            "log_seviyesi":    "INFO"
+          }
+          with open("config.json","w",encoding="utf-8") as f:
+              json.dump(cfg, f, ensure_ascii=False)
+          print("âœ… config.json oluÅŸturuldu")
+          EOF
+
+      - name: Raporu Ã‡alÄ±ÅŸtÄ±r
+        run: |
+          TARIH="${{ github.event.inputs.tarih }}"
+          if [ -n "$TARIH" ]; then
+            python tjk_tracker.py --tarih "$TARIH"
+          else
+            python tjk_tracker.py --test
+          fi
+
+      - name: Excel RaporlarÄ± Artifact Olarak Sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tjk-excel-${{ github.run_id }}
+          path: raporlar/*.xlsx
+          retention-days: 30
+          if-no-files-found: ignore
