@@ -1,13 +1,12 @@
-name: TJK GÃ¼nlÃ¼k KoÅŸu Raporu
+name: TJK Raporu
 
 on:
   schedule:
-    # Her gÃ¼n TÃ¼rkiye saati 21:00 = UTC 18:00
     - cron: "0 18 * * *"
   workflow_dispatch:
     inputs:
       tarih:
-        description: "Tarih (YYYY-MM-DD, boÅŸ = bugÃ¼n)"
+        description: "Tarih YYYY-MM-DD"
         required: false
         default: ""
 
@@ -17,7 +16,7 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Kodu Ä°ndir
+      - name: Kodu Indir
         uses: actions/checkout@v4
 
       - name: Python Kur
@@ -25,10 +24,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: BaÄŸÄ±mlÄ±lÄ±klarÄ± YÃ¼kle
+      - name: Bagimlilik Yukle
         run: pip install requests schedule openpyxl
 
-      - name: Config OluÅŸtur
+      - name: Config Olustur
         env:
           TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
@@ -37,8 +36,8 @@ jobs:
           SMTP_SIFRE:        ${{ secrets.SMTP_SIFRE }}
           EMAIL_ALICILAR:    ${{ secrets.EMAIL_ALICILAR }}
           KOMISYON:          ${{ vars.KOMISYON_YUZDESI || '5.0' }}
-          TELEGRAM_AKTIF:    ${{ vars.TELEGRAM_AKTIF    || 'true' }}
-          EMAIL_AKTIF:       ${{ vars.EMAIL_AKTIF        || 'true' }}
+          TELEGRAM_AKTIF:    ${{ vars.TELEGRAM_AKTIF || 'true' }}
+          EMAIL_AKTIF:       ${{ vars.EMAIL_AKTIF || 'true' }}
         run: |
           python - <<'EOF'
           import json, os
@@ -63,10 +62,10 @@ jobs:
           }
           with open("config.json","w",encoding="utf-8") as f:
               json.dump(cfg, f, ensure_ascii=False)
-          print("âœ… config.json oluÅŸturuldu")
+          print("config.json olusturuldu")
           EOF
 
-      - name: Raporu Ã‡alÄ±ÅŸtÄ±r
+      - name: Raporu Calistir
         run: |
           TARIH="${{ github.event.inputs.tarih }}"
           if [ -n "$TARIH" ]; then
@@ -75,7 +74,7 @@ jobs:
             python tjk_tracker.py --test
           fi
 
-      - name: Excel RaporlarÄ± Artifact Olarak Sakla
+      - name: Excel Kaydet
         if: always()
         uses: actions/upload-artifact@v4
         with:
