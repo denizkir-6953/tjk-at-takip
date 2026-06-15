@@ -28,30 +28,33 @@ jobs:
         run: pip install requests schedule openpyxl
 
       - name: Config Olustur
-        run: |
-          cat > config.json << JSONEOF
-          {
-            "telegram_bot_token": "${{ secrets.TELEGRAM_TOKEN }}",
-            "telegram_chat_ids": ${{ secrets.TELEGRAM_CHAT_IDS }},
-            "telegram_aktif": true,
-            "email_aktif": true,
-            "smtp": {
-              "sunucu": "smtp.gmail.com",
-              "port": 587,
-              "kullanici": "${{ secrets.SMTP_KULLANICI }}",
-              "sifre": "${{ secrets.SMTP_SIFRE }}"
-            },
-            "email_alicilar": ${{ secrets.EMAIL_ALICILAR }},
-            "at_sahipleri": ${{ secrets.AT_SAHIPLERI }},
-            "bildirim_saati": "21:00",
-            "komisyon_yuzdesi": 5.0,
-            "excel_aktif": true,
-            "excel_klasor": "raporlar",
-            "log_seviyesi": "INFO"
-          }
-          JSONEOF
-          echo "config.json olusturuldu"
-          cat config.json
+        env:
+          TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
+          AT_SAHIPLERI:      ${{ secrets.AT_SAHIPLERI }}
+          SMTP_KULLANICI:    ${{ secrets.SMTP_KULLANICI }}
+          SMTP_SIFRE:        ${{ secrets.SMTP_SIFRE }}
+          EMAIL_ALICILAR:    ${{ secrets.EMAIL_ALICILAR }}
+        run: python -c "
+import json, os
+cfg = {
+  'telegram_bot_token': os.environ['TELEGRAM_TOKEN'],
+  'telegram_chat_ids': json.loads(os.environ['TELEGRAM_CHAT_IDS']),
+  'telegram_aktif': True,
+  'email_aktif': True,
+  'smtp': {'sunucu': 'smtp.gmail.com', 'port': 587, 'kullanici': os.environ['SMTP_KULLANICI'], 'sifre': os.environ['SMTP_SIFRE']},
+  'email_alicilar': json.loads(os.environ['EMAIL_ALICILAR']),
+  'at_sahipleri': json.loads(os.environ['AT_SAHIPLERI']),
+  'bildirim_saati': '21:00',
+  'komisyon_yuzdesi': 5.0,
+  'excel_aktif': True,
+  'excel_klasor': 'raporlar',
+  'log_seviyesi': 'INFO'
+}
+json.dump(cfg, open('config.json','w',encoding='utf-8'), ensure_ascii=False)
+print('config.json olusturuldu')
+print(open('config.json').read()[:200])
+"
 
       - name: Raporu Calistir
         run: |
