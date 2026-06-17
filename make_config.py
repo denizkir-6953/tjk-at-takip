@@ -12,7 +12,7 @@ cfg = {
         "sifre": os.environ.get("SMTP_PASS", "")
     },
     "email_alicilar": json.loads(os.environ.get("EMAIL_LIST", "[]")),
-    "at_sahipleri": json.loads(os.environ.get("AT_LIST", "[]")),
+    "at_sahipleri": [{"isim": s} for s in json.loads(os.environ.get("AT_LIST", "[]"))],
     "bildirim_saati": "21:00",
     "komisyon_yuzdesi": 5.0,
     "excel_aktif": True,
